@@ -3,8 +3,8 @@
 #include <wasm_simd128.h>
 #include <emscripten.h>
 
-#define F32X4
-// #define F16X8
+// #define F32X4
+#define F16X8
 
 #define MATHCALL static inline
 
