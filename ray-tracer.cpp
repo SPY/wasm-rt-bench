@@ -445,11 +445,11 @@ inline void f16x8::ConditionalMove(f16x8 *A, const f16x8 &B, const f16x8 &MoveMa
 }
 
 inline f32 f16x8::HorizontalMin(const f16x8 &Value) {
-    v128 UpperHalf = wasm_i16x8_make(Value[4], Value[5], Value[6], Value[7], 0, 0, 0, 0);
-    v128 Result = wasm_f16x8_min(v128(Value), UpperHalf);
-    v128 UpperQuad = wasm_i16x8_make(Result.Half8[2], Result.Half8[3], 0, 0, 0, 0, 0, 0);
-    Result = wasm_f16x8_min(Result, UpperQuad);
-    Result = wasm_f16x8_min(Result, wasm_i16x8_make(Result.Half8[1], 0, 0, 0, 0, 0, 0, 0));
+    v128 UpperHalf = wasm_u16x8_make(Value[4], Value[5], Value[6], Value[7], 0, 0, 0, 0);
+    v128 Result = wasm_f16x8_pmin(v128(Value), UpperHalf);
+    v128 UpperQuad = wasm_u16x8_make(Result.Half8[2], Result.Half8[3], 0, 0, 0, 0, 0, 0);
+    Result = wasm_f16x8_pmin(Result, UpperQuad);
+    Result = wasm_f16x8_pmin(Result, wasm_i16x8_make(Result.Half8[1], 0, 0, 0, 0, 0, 0, 0));
     return wasm_f16x8_extract_lane(Result, 0);
 }
 MATHCALL f16x8 operator==(const f16x8 &A, const f16x8 &B) {
@@ -459,7 +459,7 @@ MATHCALL f16x8 operator==(const f16x8 &A, const f16x8 &B) {
 inline uint32_t f16x8::HorizontalMinIndex(const f16x8 &Value) {
     f32 MinValue = f16x8::HorizontalMin(Value);
     v128 Comparison = Value == f16x8(MinValue);
-    uint32_t MoveMask = wasm_i32x4_bitmask(Comparison);
+    uint32_t MoveMask = wasm_i16x8_bitmask(Comparison);
     uint32_t Result = __builtin_ctz(MoveMask);
     return Result;
 }
@@ -824,14 +824,12 @@ void Render(const image &Image) {
                 f32x4 Radius = SphereGroup.Radii;
                 f32x4 DistanceFromCenter = v3x4::Length(SphereCenter - ProjectedPoint);
                 f32x4 HitMask = DistanceFromCenter < Radius;
-                if (IsZero(HitMask)) continue;
                 
                 f32x4 X = f32x4::SquareRoot(Radius*Radius - DistanceFromCenter*DistanceFromCenter);
                 T = T - X;
                 
                 f32x4 MinMask = (T < MinT) & (T > 0);
                 f32x4 MoveMask = MinMask & HitMask;
-                if (IsZero(MoveMask)) continue;
 
                 v3x4 IntersectionPoint = RayDirection * T;
                 v3x4 Normal = v3x4::Normalize(IntersectionPoint - SphereCenter);
