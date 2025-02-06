@@ -7,7 +7,7 @@ emcc -msimd128 -mfp16 ray-tracer.cpp -o builds/ray-tracer-fp32.js
 ```
 To build D8 compatible version:
 ```
-emcc -msimd128 -mfp16 ray-tracer.cpp -o ray-tracer.js -sENVIRONMENT=shell
+emcc -msimd128 -mfp16  -mrelaxed-simd -O2 ray-tracer.cpp -o ray-tracer.js -sENVIRONMENT=shell
 ```
 Prebuilt versions available in builds directory.
 

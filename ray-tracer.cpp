@@ -3,10 +3,10 @@
 #include <wasm_simd128.h>
 #include <emscripten.h>
 
-// #define F32X4
-#define F16X8
+#define F32X4
+// #define F16X8
 
-#define MATHCALL static inline
+#define MATHCALL static __attribute__((noinline))
 
 typedef float f32;
 typedef double f64;
@@ -786,7 +786,7 @@ static inline uint32_t& GetPixel(const image &Image, uint32_t X, uint32_t Y) {
     return ImageData[Y * Image.Width + X];
 }
 
-void Render(const image &Image) {
+__attribute__((noinline)) void Render(const image &Image) {
     v3 CameraZ = v3(0.0f, 0.0f, 1.0f);
     v3 CameraX = v3(1.0f, 0.0f, 0.0f);
     v3 CameraY = v3(0.0f, 1.0f, 0.0f);
@@ -824,12 +824,14 @@ void Render(const image &Image) {
                 f32x4 Radius = SphereGroup.Radii;
                 f32x4 DistanceFromCenter = v3x4::Length(SphereCenter - ProjectedPoint);
                 f32x4 HitMask = DistanceFromCenter < Radius;
+                if (IsZero(HitMask)) continue;
                 
                 f32x4 X = f32x4::SquareRoot(Radius*Radius - DistanceFromCenter*DistanceFromCenter);
                 T = T - X;
                 
                 f32x4 MinMask = (T < MinT) & (T > 0);
                 f32x4 MoveMask = MinMask & HitMask;
+                if (IsZero(MoveMask)) continue;
 
                 v3x4 IntersectionPoint = RayDirection * T;
                 v3x4 Normal = v3x4::Normalize(IntersectionPoint - SphereCenter);
@@ -897,6 +899,12 @@ int main() {
         Render(img);
     }
     auto end = emscripten_get_now();
+    volatile uint32_t i = 0;
+    for (uint32_t y = 0; y < img.Height; ++y) {
+        for (uint32_t x = 0; x < img.Width; ++x) {
+            i += GetPixel(img, x, y);
+        }
+    }
     std::cout << VERSION << ": It took to run "
-        << (end - start)/iterations << "ms on average" << std::endl;
+        << (end - start)/iterations << "ms on average" << i << std::endl;
 }
