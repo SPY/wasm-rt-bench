@@ -26,5 +26,5 @@ d8 --experimental-wasm-fp16 --no-liftoff ray-tracer.js
 
 |                     | F32x4     | F16x8     |
 | ------------------- | --------- | --------- |
-| Arm64(M1 Pro, 2021) | 701.363ms | 622.229ms |
-| X64(iMac, i7, 2020) | 1274.7ms  | 1580.25ms(emulated via F16C) |
+| Arm64(M1 Pro, 2021) | 48.7625ms | 30.4041ms |
+| X64(iMac, i7, 2020) | 51.5738ms | 52.1876ms(emulated via F16C) |
