@@ -1,7 +1,7 @@
 #ifndef COMMON_H_
 #define COMMON_H_
 
-#define MATHCALL static __attribute__((noinline))
+#define MATHCALL static inline
 
 typedef float f32;
 typedef double f64;
