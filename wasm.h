@@ -319,7 +319,7 @@ struct f16x8 {
 
     inline f16x8() { }
     inline f16x8(f32 V) {
-        v128_t v = __builtin_wasm_splat_f16x8(0.0f);
+        v128_t v = wasm_f16x8_splat(V);
         memcpy(&Value, &v, 16);
     }
 
@@ -365,7 +365,7 @@ union v128 {
 };
 
 inline f16x8 f16x8::SquareRoot(const f16x8 &A) {
-    v128 Result = wasm_f16x8_sqrt(v128(A));
+    v128 Result = wasm_f16x8_sqrt(v128(0));
     return (f16x8)Result;
 }
 inline f16x8 f16x8::Min(const f16x8 &A, const f16x8 &B) {
@@ -385,8 +385,8 @@ inline f32 f16x8::HorizontalMin(const f16x8 &Value) {
     v128 UpperHalf = wasm_u16x8_make(Value[4], Value[5], Value[6], Value[7], 0, 0, 0, 0);
     v128 Result = wasm_f16x8_pmin(v128(Value), UpperHalf);
     v128 UpperQuad = wasm_u16x8_make(Result.Half8[2], Result.Half8[3], 0, 0, 0, 0, 0, 0);
-    Result = wasm_f16x8_pmin(Result, UpperQuad);
-    Result = wasm_f16x8_pmin(Result, wasm_i16x8_make(Result.Half8[1], 0, 0, 0, 0, 0, 0, 0));
+    // Result = wasm_f16x8_pmin(Result, UpperQuad);
+    // Result = wasm_f16x8_pmin(Result, wasm_i16x8_make(Result.Half8[1], 0, 0, 0, 0, 0, 0, 0));
     return wasm_f16x8_extract_lane(Result, 0);
 }
 MATHCALL f16x8 operator==(const f16x8 &A, const f16x8 &B) {
@@ -536,12 +536,12 @@ inline f16x8 v3x8::LengthSquared(const v3x8 &A) {
     return Result;
 }
 
-constexpr static f32 F32Epsilon = 1e-5f;
+constexpr static f32 F16Epsilon = 1e-3f;
 
 inline v3x8 v3x8::Normalize(const v3x8 &Value) {
     f16x8 LengthSquared = v3x8::LengthSquared(Value);
 
-    f16x8 LengthGreaterThanZeroMask = LengthSquared > F32Epsilon;
+    f16x8 LengthGreaterThanZeroMask = LengthSquared > F16Epsilon;
 
     f16x8 Length = f16x8::SquareRoot(LengthSquared);
     v3x8 Result = Value / Length;
@@ -572,7 +572,7 @@ inline f32 v3::LengthSquared(const v3 &Value) {
 inline v3 v3::Normalize(const v3 &Value) {
     f32 LengthSquared = v3::LengthSquared(Value);
 
-    bool LengthGreaterThanZero = LengthSquared > F32Epsilon;
+    bool LengthGreaterThanZero = LengthSquared > F16Epsilon;
     v128 Mask = v128::CreateMask(LengthGreaterThanZero);
 
     f32 Length = __builtin_sqrt(LengthSquared);

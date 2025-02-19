@@ -129,10 +129,6 @@ void Init() {
     ConvertScalarSpheresToSIMDSpheres(ScalarSpheres, 8, SphereGroups);
 }
 
-MATHCALL f32 Saturate(uint16_t Value) {
-    return Value / 128;
-}
-
 MATHCALL f32 Saturate(f32 Value) {
     if (Value < 0.0f) return 0.0f;
     if (Value > 1.0f) return 1.0f;
@@ -182,14 +178,14 @@ __attribute__((noinline)) void Render(const image &Image) {
                 f32x4 Radius = SphereGroup.Radii;
                 f32x4 DistanceFromCenter = v3x4::Length(SphereCenter - ProjectedPoint);
                 f32x4 HitMask = DistanceFromCenter < Radius;
-                // if (IsZero(HitMask)) continue;
+                if (IsZero(HitMask)) continue;
                 
                 f32x4 X = f32x4::SquareRoot(Radius*Radius - DistanceFromCenter*DistanceFromCenter);
                 T = T - X;
                 
                 f32x4 MinMask = (T < MinT) & (T > 0);
                 f32x4 MoveMask = MinMask & HitMask;
-                // if (IsZero(MoveMask)) continue;
+                if (IsZero(MoveMask)) continue;
 
                 v3x4 IntersectionPoint = RayDirection * T;
                 v3x4 Normal = v3x4::Normalize(IntersectionPoint - SphereCenter);
@@ -213,14 +209,14 @@ __attribute__((noinline)) void Render(const image &Image) {
                 f16x8 Radius = SphereGroup.Radii;
                 f16x8 DistanceFromCenter = v3x8::Length(SphereCenter - ProjectedPoint);
                 f16x8 HitMask = DistanceFromCenter < Radius;
-                // if (IsZero(HitMask)) continue;
+                if (IsZero(HitMask)) continue;
                 
                 f16x8 X = f16x8::SquareRoot(Radius*Radius - DistanceFromCenter*DistanceFromCenter);
                 T = T - X;
                 
                 f16x8 MinMask = (T < MinT) & (T > 0);
                 f16x8 MoveMask = MinMask & HitMask;
-                // if (IsZero(MoveMask)) continue;
+                if (IsZero(MoveMask)) continue;
 
                 v3x8 IntersectionPoint = RayDirection * T;
                 v3x8 Normal = v3x8::Normalize(IntersectionPoint - SphereCenter);
@@ -231,7 +227,6 @@ __attribute__((noinline)) void Render(const image &Image) {
 
             uint32_t Index = f16x8::HorizontalMinIndex(MinT);
 #endif
-
             v3 OutputColor;
             OutputColor.x = Color.x[Index];
             OutputColor.y = Color.y[Index];
@@ -248,22 +243,18 @@ __attribute__((noinline)) void Render(const image &Image) {
 }
 
 int main() {
-    image img = CreateImage(2048, 2048);
+    const int WIDTH = 2048;
+    image img = CreateImage(WIDTH, WIDTH);
     Init();
     Render(img);
-    auto start = NOW;
-    auto iterations = 10;
+    volatile auto iterations = 10;
     volatile uint32_t acc = 0;
+    auto start = NOW;
     for (int i = 0; i < iterations; i++) {
         Render(img);
-        acc += GetPixel(img, i, i);
+        acc += GetPixel(img, iterations, iterations);
     }
     auto end = NOW;
-    for (uint32_t y = 0; y < img.Height; ++y) {
-        for (uint32_t x = 0; x < img.Width; ++x) {
-            acc += GetPixel(img, x, y);
-        }
-    }
     std::cout << VERSION << ": It took to run "
         << (end - start)/iterations << "ms on average" << acc << std::endl;
 }
